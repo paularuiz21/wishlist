@@ -156,7 +156,10 @@ function parseJsonResponse(response) {
     return { ...EMPTY_RESULT, _debug: `sin JSON en la respuesta: ${cleaned.slice(0, 250)} | tools: ${toolInfo}` }
   }
   try {
-    return { ...EMPTY_RESULT, ...JSON.parse(jsonText) }
+    const parsed = JSON.parse(jsonText)
+    // _debug siempre presente mientras depuramos, incluso si el parseo salió
+    // bien — así vemos si la tool se ejecutó de verdad aunque no haya "error".
+    return { ...EMPTY_RESULT, ...parsed, _debug: `OK | tools: ${toolInfo}` }
   } catch {
     return { ...EMPTY_RESULT, _debug: `no se pudo parsear: ${jsonText.slice(0, 250)} | tools: ${toolInfo}` }
   }
