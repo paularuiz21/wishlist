@@ -132,7 +132,10 @@ a {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  /* padding-top da lugar al box-shadow del chip activo — sin esto, el
+     contenedor scrolleable lo recorta también en el eje vertical (una
+     rareza de CSS: overflow-x: auto fuerza overflow-y a "auto" también). */
+  padding: 3px 0 5px;
   margin-bottom: 12px;
   scrollbar-width: none;
   -ms-overflow-style: none;
