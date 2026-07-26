@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { CATEGORIES } from '../lib/categories'
+import { CURRENCIES } from '../lib/currencies'
 import { uploadPhoto } from '../lib/items'
 
 const empty = {
@@ -178,8 +179,11 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
             <div className="field" style={{ maxWidth: 100 }}>
               <label>Moneda</label>
               <select value={form.currency} onChange={(e) => set('currency', e.target.value)}>
-                <option value="ARS">ARS</option>
-                <option value="USD">USD</option>
+                {CURRENCIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.value}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

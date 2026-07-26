@@ -15,7 +15,7 @@ create table if not exists items (
   description text,
   notes text,
   price numeric,
-  currency text check (currency in ('ARS', 'USD')),
+  currency text check (currency in ('ARS', 'USD', 'EUR', 'GBP', 'BRL')),
   category text not null default 'Otros',
   purchased boolean not null default false,
   purchased_at timestamptz,

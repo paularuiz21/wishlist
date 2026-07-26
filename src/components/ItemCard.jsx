@@ -1,9 +1,9 @@
 import CategoryChip from './CategoryChip'
+import { currencySymbol } from '../lib/currencies'
 
 function formatPrice(price, currency) {
   if (price == null) return null
-  const symbol = currency === 'USD' ? 'US$' : '$'
-  return `${symbol}${Number(price).toLocaleString('es-AR')}`
+  return `${currencySymbol(currency)}${Number(price).toLocaleString('es-AR')}`
 }
 
 export default function ItemCard({ item, onOpen }) {

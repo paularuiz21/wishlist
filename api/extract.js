@@ -1,6 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { CURRENCIES } from '../src/lib/currencies.js'
 
 const client = new Anthropic()
+
+const CURRENCY_CODES = CURRENCIES.map((c) => c.value)
 
 const EMPTY_RESULT = { title: null, description: null, price: null, currency: null }
 
@@ -10,7 +13,7 @@ const SCHEMA = {
     title: { anyOf: [{ type: 'string' }, { type: 'null' }] },
     description: { anyOf: [{ type: 'string' }, { type: 'null' }] },
     price: { anyOf: [{ type: 'number' }, { type: 'null' }] },
-    currency: { anyOf: [{ type: 'string', enum: ['ARS', 'USD'] }, { type: 'null' }] },
+    currency: { anyOf: [{ type: 'string', enum: CURRENCY_CODES }, { type: 'null' }] },
   },
   required: ['title', 'description', 'price', 'currency'],
   additionalProperties: false,
@@ -44,7 +47,7 @@ export default async function handler(req, res) {
 - title: nombre del producto
 - description: descripción breve (1-2 oraciones)
 - price: precio numérico visible (sin símbolo ni separadores de miles)
-- currency: "ARS" o "USD" según corresponda
+- currency: la moneda según el símbolo o contexto (${CURRENCY_CODES.join(', ')})
 
 Si algún dato no es visible o legible en la imagen, usá null para ese campo. No inventes datos.`,
             },
