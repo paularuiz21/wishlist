@@ -51,13 +51,19 @@ async function extractFromLink(link) {
   // prompt y lo parseamos nosotros (más tolerante a variaciones).
   const response = await client.messages.create({
     model: 'claude-sonnet-5',
-    max_tokens: 4096,
+    max_tokens: 6144,
     output_config: { effort: 'low' },
-    tools: [{ type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 1, max_content_tokens: 4000 }],
+    tools: [{ type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 1, max_content_tokens: 6000 }],
     messages: [
       {
         role: 'user',
         content: `Buscá esta página de producto: ${link}
+
+El precio, la moneda y la foto principal casi siempre están en datos estructurados estándar del HTML, no como texto suelto. Buscá EN ESTE ORDEN, y frená apenas encuentres el dato (no sigas buscando de más):
+
+1. Un bloque <script type="application/ld+json"> con un objeto tipo Product — el precio suele estar en "offers.price" / "offers.priceCurrency", y la foto en "image".
+2. Si no aparece ahí, meta tags como product:price:amount, product:price:currency, og:price:amount, og:image.
+3. Recién si ninguno de esos dos aparece, buscalo como texto visible en la página.
 
 Después de leerla, respondé ÚNICAMENTE con un objeto JSON (sin bloque de código markdown, sin backticks, sin ningún texto antes o después) con exactamente estas claves:
 
@@ -66,7 +72,7 @@ Después de leerla, respondé ÚNICAMENTE con un objeto JSON (sin bloque de cód
   "description": string o null (descripción breve, 1-2 oraciones),
   "price": number o null (precio numérico, sin símbolo ni separadores de miles),
   "currency": "ARS", "USD" o null (según corresponda a la tienda),
-  "photo_url": string o null (URL absoluta de la imagen principal del producto, ej. meta tag og:image)
+  "photo_url": string o null (URL absoluta de la imagen principal del producto)
 }
 
 Si algún dato no está disponible en la página, usá null para ese campo. No inventes datos.`,
