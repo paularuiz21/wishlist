@@ -134,6 +134,12 @@ a {
   overflow-x: auto;
   padding-bottom: 4px;
   margin-bottom: 12px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.category-filter::-webkit-scrollbar {
+  display: none;
 }
 
 .category-chip-btn {
