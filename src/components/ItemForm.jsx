@@ -40,6 +40,11 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
       })
       if (!res.ok) throw new Error('No se pudo autocompletar')
       const data = await res.json()
+      // Diagnóstico visible en pantalla (temporal, mientras afinamos el
+      // auto-completado) — si el server no pudo extraer nada, muestra por qué.
+      if (data._debug) {
+        setAutoError(`No se pudo autocompletar (detalle: ${data._debug})`)
+      }
       if (source === 'link' && data.photo_url) photoFromLink.current = true
       setForm((f) => ({
         ...f,

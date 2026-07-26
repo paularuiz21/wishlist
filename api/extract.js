@@ -4,16 +4,15 @@ const client = new Anthropic()
 
 const EMPTY_RESULT = { title: null, description: null, price: null, currency: null, photo_url: null }
 
-const SCHEMA = {
+const IMAGE_SCHEMA = {
   type: 'object',
   properties: {
     title: { anyOf: [{ type: 'string' }, { type: 'null' }] },
     description: { anyOf: [{ type: 'string' }, { type: 'null' }] },
     price: { anyOf: [{ type: 'number' }, { type: 'null' }] },
     currency: { anyOf: [{ type: 'string', enum: ['ARS', 'USD'] }, { type: 'null' }] },
-    photo_url: { anyOf: [{ type: 'string' }, { type: 'null' }] },
   },
-  required: ['title', 'description', 'price', 'currency', 'photo_url'],
+  required: ['title', 'description', 'price', 'currency'],
   additionalProperties: false,
 }
 
@@ -38,34 +37,39 @@ export default async function handler(req, res) {
     res.status(200).json(result)
   } catch (err) {
     console.error('extract error:', err)
-    // No bloqueamos el guardado del usuario: devolvemos vacío en vez de un error.
-    res.status(200).json(EMPTY_RESULT)
+    // No bloqueamos el guardado del usuario: devolvemos vacío en vez de un
+    // error duro, pero incluimos el detalle en _debug para poder
+    // diagnosticar desde el Network tab / la propia UI sin acceso a los
+    // logs de Vercel.
+    res.status(200).json({ ...EMPTY_RESULT, _debug: String((err && err.message) || err) })
   }
 }
 
 async function extractFromLink(link) {
+  // Ojo: sin output_config.format acá a propósito — combinado con el tool
+  // use de web_fetch daba resultados poco confiables. Le pedimos el JSON por
+  // prompt y lo parseamos nosotros (más tolerante a variaciones).
   const response = await client.messages.create({
     model: 'claude-sonnet-5',
-    // Con tool use (web_fetch) + thinking por defecto, 2048 se quedaba corto
-    // y el modelo se cortaba antes de escribir el JSON final. 4096 da margen
-    // sin gastar de más: es un techo, no un piso — solo se cobra lo que
-    // realmente se genera.
     max_tokens: 4096,
-    output_config: { effort: 'low', format: { type: 'json_schema', schema: SCHEMA } },
+    output_config: { effort: 'low' },
     tools: [{ type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 1, max_content_tokens: 4000 }],
     messages: [
       {
         role: 'user',
-        content: `Buscá esta página de producto y extraé sus datos: ${link}
+        content: `Buscá esta página de producto: ${link}
 
-Devolvé:
-- title: nombre del producto, corto
-- description: descripción breve del producto (1-2 oraciones)
-- price: precio numérico (sin símbolo de moneda ni separadores de miles)
-- currency: "ARS" o "USD" según corresponda a la tienda/página
-- photo_url: URL absoluta de la imagen principal del producto (ej. meta tag og:image), o null si no se encuentra
+Después de leerla, respondé ÚNICAMENTE con un objeto JSON (sin bloque de código markdown, sin backticks, sin ningún texto antes o después) con exactamente estas claves:
 
-Si algún dato no está disponible en la página, usá null para ese campo. No inventes datos. Respondé únicamente con el JSON, sin texto adicional antes ni después.`,
+{
+  "title": string o null (nombre del producto, corto),
+  "description": string o null (descripción breve, 1-2 oraciones),
+  "price": number o null (precio numérico, sin símbolo ni separadores de miles),
+  "currency": "ARS", "USD" o null (según corresponda a la tienda),
+  "photo_url": string o null (URL absoluta de la imagen principal del producto, ej. meta tag og:image)
+}
+
+Si algún dato no está disponible en la página, usá null para ese campo. No inventes datos.`,
       },
     ],
   })
@@ -76,7 +80,7 @@ async function extractFromImage(imageBase64, mediaType) {
   const response = await client.messages.create({
     model: 'claude-sonnet-5',
     max_tokens: 3072,
-    output_config: { effort: 'low', format: { type: 'json_schema', schema: SCHEMA } },
+    output_config: { effort: 'low', format: { type: 'json_schema', schema: IMAGE_SCHEMA } },
     messages: [
       {
         role: 'user',
@@ -89,9 +93,8 @@ async function extractFromImage(imageBase64, mediaType) {
 - description: descripción breve (1-2 oraciones)
 - price: precio numérico visible (sin símbolo ni separadores de miles)
 - currency: "ARS" o "USD" según corresponda
-- photo_url: siempre null (no aplica en este caso)
 
-Si algún dato no es visible o legible en la imagen, usá null para ese campo. No inventes datos. Respondé únicamente con el JSON, sin texto adicional antes ni después.`,
+Si algún dato no es visible o legible en la imagen, usá null para ese campo. No inventes datos.`,
           },
         ],
       },
@@ -101,16 +104,27 @@ Si algún dato no es visible o legible en la imagen, usá null para ese campo. N
 }
 
 function parseJsonResponse(response) {
-  if (response.stop_reason === 'refusal') return EMPTY_RESULT
+  if (response.stop_reason === 'refusal') {
+    return { ...EMPTY_RESULT, _debug: `refusal: ${JSON.stringify(response.stop_details || {})}` }
+  }
   // Tomamos el ÚLTIMO bloque de texto, no el primero: si el modelo escribe
   // algo antes de llamar a la herramienta (server tool), ese texto también
   // es type "text" y quedaría antes del JSON final.
   const textBlocks = response.content.filter((b) => b.type === 'text')
   const textBlock = textBlocks[textBlocks.length - 1]
-  if (!textBlock) return EMPTY_RESULT
+  if (!textBlock) {
+    return { ...EMPTY_RESULT, _debug: `sin bloque de texto en la respuesta (stop_reason=${response.stop_reason})` }
+  }
+  // El modelo a veces envuelve el JSON en un bloque de código markdown pese a
+  // pedirle que no lo haga — lo sacamos si aparece.
+  const raw = textBlock.text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/, '')
+    .trim()
   try {
-    return { ...EMPTY_RESULT, ...JSON.parse(textBlock.text) }
+    return { ...EMPTY_RESULT, ...JSON.parse(raw) }
   } catch {
-    return EMPTY_RESULT
+    return { ...EMPTY_RESULT, _debug: `no se pudo parsear la respuesta: ${raw.slice(0, 300)}` }
   }
 }
