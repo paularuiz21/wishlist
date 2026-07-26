@@ -12,6 +12,7 @@ const empty = {
   price: '',
   currency: 'ARS',
   category: 'Otros',
+  subcategory: '',
 }
 
 export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, onClose }) {
@@ -188,15 +189,26 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
             </div>
           </div>
 
-          <div className="field">
-            <label>Categoría</label>
-            <select value={form.category} onChange={(e) => set('category', e.target.value)}>
-              {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.value}
-                </option>
-              ))}
-            </select>
+          <div className="field-row">
+            <div className="field">
+              <label>Categoría</label>
+              <select value={form.category} onChange={(e) => set('category', e.target.value)}>
+                {CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.value}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label>Subcategoría (opcional)</label>
+              <input
+                type="text"
+                placeholder="Ej: Zapatillas, Camisas..."
+                value={form.subcategory || ''}
+                onChange={(e) => set('subcategory', e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="field">

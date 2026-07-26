@@ -28,7 +28,10 @@ export default function ItemCard({ item, onOpen }) {
         {photos.length > 1 && <span className="photo-count-badge">+{photos.length - 1}</span>}
       </div>
       <div className="card-body">
-        <CategoryChip category={item.category} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <CategoryChip category={item.category} />
+          {item.subcategory && <span className="subcategory-text">{item.subcategory}</span>}
+        </div>
         <div className="card-title">{item.title || 'Sin título'}</div>
         {item.link && (
           <a

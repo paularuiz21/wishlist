@@ -48,7 +48,8 @@ export default function App() {
       list = list.filter(
         (i) =>
           (i.title || '').toLowerCase().includes(q) ||
-          (i.description || '').toLowerCase().includes(q)
+          (i.description || '').toLowerCase().includes(q) ||
+          (i.subcategory || '').toLowerCase().includes(q)
       )
     }
     list = [...list].sort((a, b) => {
