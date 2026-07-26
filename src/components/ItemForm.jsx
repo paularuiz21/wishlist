@@ -25,14 +25,16 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
     setForm((f) => ({ ...f, [field]: value }))
   }
 
-  async function runAutocomplete(body, source) {
+  // El reconocimiento sale únicamente de las fotos subidas — el link es solo
+  // una referencia (botón "Ver artículo"), no dispara autocompletado.
+  async function runAutocomplete(imageBase64, mediaType) {
     setAutoLoading(true)
     setAutoError('')
     try {
       const res = await fetch('/api/extract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ imageBase64, mediaType }),
       })
       if (!res.ok) throw new Error('No se pudo autocompletar')
       const data = await res.json()
@@ -48,20 +50,12 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
         description: f.description || data.description || '',
         price: f.price || data.price || '',
         currency: data.currency || f.currency,
-        // Si el link encontró una foto de la página y todavía no subiste
-        // ninguna a mano, la usamos como primera foto de la galería.
-        photo_urls: source === 'link' && data.photo_url && f.photo_urls.length === 0 ? [data.photo_url] : f.photo_urls,
       }))
     } catch (err) {
       setAutoError('No se pudo autocompletar automáticamente. Cargá los datos a mano.')
     } finally {
       setAutoLoading(false)
     }
-  }
-
-  function handleLinkBlur() {
-    if (!form.link || form.title) return
-    runAutocomplete({ link: form.link }, 'link')
   }
 
   async function handleImagePick(e) {
@@ -84,7 +78,7 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
     if (hadNoTitle) {
       const reader = new FileReader()
       reader.onload = () => {
-        runAutocomplete({ imageBase64: reader.result.split(',')[1], mediaType: files[0].type }, 'image')
+        runAutocomplete(reader.result.split(',')[1], files[0].type)
       }
       reader.readAsDataURL(files[0])
     }
@@ -124,7 +118,6 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
               type="url"
               value={form.link}
               onChange={(e) => set('link', e.target.value)}
-              onBlur={handleLinkBlur}
               placeholder="https://..."
             />
           </div>
