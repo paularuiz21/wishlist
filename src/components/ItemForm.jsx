@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { CATEGORIES } from '../lib/categories'
 import { uploadPhoto } from '../lib/items'
 
 const empty = {
   link: '',
-  photo_url: '',
+  photo_urls: [],
   title: '',
   description: '',
   notes: '',
@@ -20,10 +20,6 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
   const [autoError, setAutoError] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
-  const linkBlurHandled = useRef(false)
-  // true cuando la foto actual viene de la página del link (limpia). Mientras
-  // sea true, no la pisamos con un screenshot subido para autocompletar.
-  const photoFromLink = useRef(Boolean(item?.link && item?.photo_url))
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
@@ -41,22 +37,20 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
       if (!res.ok) throw new Error('No se pudo autocompletar')
       const data = await res.json()
       // Diagnóstico visible en pantalla (temporal, mientras afinamos el
-      // auto-completado) — se muestra siempre, haya fallado o no, para ver
-      // si la tool de fetch se llegó a ejecutar.
+      // auto-completado) — se muestra siempre, haya fallado o no.
       if (data._debug) {
         const ok = data._debug.startsWith('OK')
         setAutoError(ok ? `Debug: ${data._debug}` : `No se pudo autocompletar del todo (detalle: ${data._debug})`)
       }
-      if (source === 'link' && data.photo_url) photoFromLink.current = true
       setForm((f) => ({
         ...f,
         title: f.title || data.title || '',
         description: f.description || data.description || '',
         price: f.price || data.price || '',
         currency: data.currency || f.currency,
-        // La foto de la página (link) siempre gana por sobre un screenshot
-        // subido a mano; si no hay foto de página, se conserva la que ya haya.
-        photo_url: source === 'link' && data.photo_url ? data.photo_url : f.photo_url || data.photo_url || '',
+        // Si el link encontró una foto de la página y todavía no subiste
+        // ninguna a mano, la usamos como primera foto de la galería.
+        photo_urls: source === 'link' && data.photo_url && f.photo_urls.length === 0 ? [data.photo_url] : f.photo_urls,
       }))
     } catch (err) {
       setAutoError('No se pudo autocompletar automáticamente. Cargá los datos a mano.')
@@ -66,37 +60,38 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
   }
 
   function handleLinkBlur() {
-    if (linkBlurHandled.current) return
     if (!form.link || form.title) return
-    linkBlurHandled.current = true
     runAutocomplete({ link: form.link }, 'link')
   }
 
   async function handleImagePick(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+    const hadNoTitle = !form.title
 
     setUploadingPhoto(true)
     try {
-      const url = await uploadPhoto(file)
-      // Si ya tenemos una foto limpia de la página del link, no la pisamos
-      // con el screenshot — este solo se usa para ayudar a autocompletar.
-      if (!photoFromLink.current) set('photo_url', url)
+      const urls = await Promise.all(files.map(uploadPhoto))
+      setForm((f) => ({ ...f, photo_urls: [...f.photo_urls, ...urls] }))
     } catch {
-      setAutoError('No se pudo subir la imagen.')
+      setAutoError('No se pudo subir alguna imagen.')
+    } finally {
       setUploadingPhoto(false)
-      return
     }
-    setUploadingPhoto(false)
 
-    // Si todavía no hay título, intentamos leer la captura para autocompletar.
-    if (!form.title) {
+    // Si todavía no había título, usamos la primera foto para autocompletar
+    // (título/descripción/precio) además de guardarla en la galería.
+    if (hadNoTitle) {
       const reader = new FileReader()
       reader.onload = () => {
-        runAutocomplete({ imageBase64: reader.result.split(',')[1], mediaType: file.type }, 'image')
+        runAutocomplete({ imageBase64: reader.result.split(',')[1], mediaType: files[0].type }, 'image')
       }
-      reader.readAsDataURL(file)
+      reader.readAsDataURL(files[0])
     }
+  }
+
+  function handleRemovePhoto(idx) {
+    setForm((f) => ({ ...f, photo_urls: f.photo_urls.filter((_, i) => i !== idx) }))
   }
 
   async function handleSubmit(e) {
@@ -135,17 +130,29 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
           </div>
 
           <div className="field">
-            <label>Foto</label>
-            <label className="image-upload">
-              {form.photo_url ? (
-                <img src={form.photo_url} alt="preview" />
-              ) : uploadingPhoto ? (
-                'Subiendo...'
-              ) : (
-                'Tocá para subir una foto o screenshot'
-              )}
-              <input type="file" accept="image/*" onChange={handleImagePick} />
-            </label>
+            <label>Fotos</label>
+            <div className="photo-gallery">
+              {form.photo_urls.map((url, idx) => (
+                <div className="photo-gallery-item" key={url + idx}>
+                  <img src={url} alt={`Foto ${idx + 1}`} />
+                  <button
+                    type="button"
+                    className="photo-gallery-remove"
+                    onClick={() => handleRemovePhoto(idx)}
+                    aria-label="Quitar foto"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <label className="photo-gallery-add">
+                {uploadingPhoto ? <span className="spinner" /> : '+'}
+                <input type="file" accept="image/*" multiple onChange={handleImagePick} />
+              </label>
+            </div>
+            <p className="photo-gallery-hint">
+              Subí una o más fotos del producto (o un screenshot) — se guardan todas y ayudan a autocompletar.
+            </p>
           </div>
 
           {(autoLoading || autoError) && (

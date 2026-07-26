@@ -225,6 +225,18 @@ a {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
+.photo-count-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(24, 24, 27, 0.65);
+  color: #fff;
+  font-weight: 500;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
 .card-body {
   padding: 10px 12px 12px;
   display: flex;
@@ -349,31 +361,74 @@ a {
   flex: 1;
 }
 
-.image-upload {
+.photo-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.photo-gallery-item {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #E4E4E7;
+  flex-shrink: 0;
+}
+
+.photo-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-gallery-remove {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(24, 24, 27, 0.65);
+  color: #fff;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.photo-gallery-add {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
   border: 1px dashed #D4D4D8;
-  border-radius: 12px;
-  padding: 16px;
-  text-align: center;
   color: #8B8B95;
-  font-size: 13px;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   position: relative;
-  overflow: hidden;
+  flex-shrink: 0;
 }
 
-.image-upload img {
-  max-width: 100%;
-  max-height: 160px;
-  border-radius: 8px;
-  display: block;
-  margin: 0 auto;
-}
-
-.image-upload input {
+.photo-gallery-add input {
   position: absolute;
   inset: 0;
   opacity: 0;
   cursor: pointer;
+}
+
+.photo-gallery-hint {
+  font-size: 12px;
+  color: #8B8B95;
+  margin: 6px 0 0;
 }
 
 .autocomplete-status {

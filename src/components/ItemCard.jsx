@@ -8,12 +8,13 @@ function formatPrice(price, currency) {
 
 export default function ItemCard({ item, onOpen }) {
   const priceLabel = formatPrice(item.price, item.currency)
+  const photos = item.photo_urls || []
 
   return (
     <div className="card" onClick={() => onOpen(item)}>
       <div className="card-media">
-        {item.photo_url ? (
-          <img src={item.photo_url} alt={item.title || 'Artículo'} loading="lazy" />
+        {photos.length > 0 ? (
+          <img src={photos[0]} alt={item.title || 'Artículo'} loading="lazy" />
         ) : (
           <div className="no-image">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -24,6 +25,7 @@ export default function ItemCard({ item, onOpen }) {
           </div>
         )}
         {priceLabel && <span className="price-badge">{priceLabel}</span>}
+        {photos.length > 1 && <span className="photo-count-badge">+{photos.length - 1}</span>}
       </div>
       <div className="card-body">
         <CategoryChip category={item.category} />

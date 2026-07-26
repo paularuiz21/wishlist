@@ -10,7 +10,7 @@ create table if not exists items (
   -- soporte multi-usuario. Nullable por ahora.
   owner_id uuid,
   link text,
-  photo_url text,
+  photo_urls text[] not null default '{}',
   title text,
   description text,
   notes text,
