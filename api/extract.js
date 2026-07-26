@@ -46,9 +46,13 @@ export default async function handler(req, res) {
 async function extractFromLink(link) {
   const response = await client.messages.create({
     model: 'claude-opus-5',
-    max_tokens: 2048,
+    // Con tool use (web_fetch) + thinking por defecto, 2048 se quedaba corto
+    // y el modelo se cortaba antes de escribir el JSON final. 4096 da margen
+    // sin gastar de más: es un techo, no un piso — solo se cobra lo que
+    // realmente se genera.
+    max_tokens: 4096,
     output_config: { effort: 'low', format: { type: 'json_schema', schema: SCHEMA } },
-    tools: [{ type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 2, max_content_tokens: 6000 }],
+    tools: [{ type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 1, max_content_tokens: 4000 }],
     messages: [
       {
         role: 'user',
@@ -61,7 +65,7 @@ Devolvé:
 - currency: "ARS" o "USD" según corresponda a la tienda/página
 - photo_url: URL absoluta de la imagen principal del producto (ej. meta tag og:image), o null si no se encuentra
 
-Si algún dato no está disponible en la página, usá null para ese campo. No inventes datos.`,
+Si algún dato no está disponible en la página, usá null para ese campo. No inventes datos. Respondé únicamente con el JSON, sin texto adicional antes ni después.`,
       },
     ],
   })
@@ -71,7 +75,7 @@ Si algún dato no está disponible en la página, usá null para ese campo. No i
 async function extractFromImage(imageBase64, mediaType) {
   const response = await client.messages.create({
     model: 'claude-opus-5',
-    max_tokens: 2048,
+    max_tokens: 3072,
     output_config: { effort: 'low', format: { type: 'json_schema', schema: SCHEMA } },
     messages: [
       {
@@ -87,7 +91,7 @@ async function extractFromImage(imageBase64, mediaType) {
 - currency: "ARS" o "USD" según corresponda
 - photo_url: siempre null (no aplica en este caso)
 
-Si algún dato no es visible o legible en la imagen, usá null para ese campo. No inventes datos.`,
+Si algún dato no es visible o legible en la imagen, usá null para ese campo. No inventes datos. Respondé únicamente con el JSON, sin texto adicional antes ni después.`,
           },
         ],
       },
@@ -98,7 +102,11 @@ Si algún dato no es visible o legible en la imagen, usá null para ese campo. N
 
 function parseJsonResponse(response) {
   if (response.stop_reason === 'refusal') return EMPTY_RESULT
-  const textBlock = response.content.find((b) => b.type === 'text')
+  // Tomamos el ÚLTIMO bloque de texto, no el primero: si el modelo escribe
+  // algo antes de llamar a la herramienta (server tool), ese texto también
+  // es type "text" y quedaría antes del JSON final.
+  const textBlocks = response.content.filter((b) => b.type === 'text')
+  const textBlock = textBlocks[textBlocks.length - 1]
   if (!textBlock) return EMPTY_RESULT
   try {
     return { ...EMPTY_RESULT, ...JSON.parse(textBlock.text) }

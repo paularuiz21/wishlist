@@ -21,12 +21,15 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
   const [saving, setSaving] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const linkBlurHandled = useRef(false)
+  // true cuando la foto actual viene de la página del link (limpia). Mientras
+  // sea true, no la pisamos con un screenshot subido para autocompletar.
+  const photoFromLink = useRef(Boolean(item?.link && item?.photo_url))
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
   }
 
-  async function runAutocomplete(body) {
+  async function runAutocomplete(body, source) {
     setAutoLoading(true)
     setAutoError('')
     try {
@@ -37,13 +40,16 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
       })
       if (!res.ok) throw new Error('No se pudo autocompletar')
       const data = await res.json()
+      if (source === 'link' && data.photo_url) photoFromLink.current = true
       setForm((f) => ({
         ...f,
         title: f.title || data.title || '',
         description: f.description || data.description || '',
         price: f.price || data.price || '',
         currency: data.currency || f.currency,
-        photo_url: f.photo_url || data.photo_url || '',
+        // La foto de la página (link) siempre gana por sobre un screenshot
+        // subido a mano; si no hay foto de página, se conserva la que ya haya.
+        photo_url: source === 'link' && data.photo_url ? data.photo_url : f.photo_url || data.photo_url || '',
       }))
     } catch (err) {
       setAutoError('No se pudo autocompletar automáticamente. Cargá los datos a mano.')
@@ -56,7 +62,7 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
     if (linkBlurHandled.current) return
     if (!form.link || form.title) return
     linkBlurHandled.current = true
-    runAutocomplete({ link: form.link })
+    runAutocomplete({ link: form.link }, 'link')
   }
 
   async function handleImagePick(e) {
@@ -66,7 +72,9 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
     setUploadingPhoto(true)
     try {
       const url = await uploadPhoto(file)
-      set('photo_url', url)
+      // Si ya tenemos una foto limpia de la página del link, no la pisamos
+      // con el screenshot — este solo se usa para ayudar a autocompletar.
+      if (!photoFromLink.current) set('photo_url', url)
     } catch {
       setAutoError('No se pudo subir la imagen.')
       setUploadingPhoto(false)
@@ -78,7 +86,7 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
     if (!form.title) {
       const reader = new FileReader()
       reader.onload = () => {
-        runAutocomplete({ imageBase64: reader.result.split(',')[1], mediaType: file.type })
+        runAutocomplete({ imageBase64: reader.result.split(',')[1], mediaType: file.type }, 'image')
       }
       reader.readAsDataURL(file)
     }
