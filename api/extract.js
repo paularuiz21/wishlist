@@ -103,9 +103,38 @@ Si algún dato no es visible o legible en la imagen, usá null para ese campo. N
   return parseJsonResponse(response)
 }
 
+function summarizeTools(content) {
+  // Diagnóstico de qué pasó con las server tools (web_fetch): si se llegó a
+  // invocar, y qué devolvió (o qué error dio) — para no depender de lo que el
+  // modelo narra sobre sí mismo, que puede ser inexacto.
+  const blocks = content.filter(
+    (b) => b.type === 'server_tool_use' || b.type === 'web_fetch_tool_result'
+  )
+  if (blocks.length === 0) return 'ninguna tool invocada'
+  return blocks
+    .map((b) =>
+      b.type === 'server_tool_use'
+        ? `invocó ${b.name} con input=${JSON.stringify(b.input)}`
+        : `resultado=${JSON.stringify(b.content).slice(0, 250)}`
+    )
+    .join(' || ')
+}
+
+function extractJsonObject(text) {
+  // Busca el primer "{" y el último "}" del texto — tolera que el modelo
+  // agregue una explicación en prosa antes o después del JSON pese a que se
+  // le pidió que no lo haga.
+  const start = text.indexOf('{')
+  const end = text.lastIndexOf('}')
+  if (start === -1 || end === -1 || end < start) return null
+  return text.slice(start, end + 1)
+}
+
 function parseJsonResponse(response) {
+  const toolInfo = summarizeTools(response.content)
+
   if (response.stop_reason === 'refusal') {
-    return { ...EMPTY_RESULT, _debug: `refusal: ${JSON.stringify(response.stop_details || {})}` }
+    return { ...EMPTY_RESULT, _debug: `refusal: ${JSON.stringify(response.stop_details || {})} | tools: ${toolInfo}` }
   }
   // Tomamos el ÚLTIMO bloque de texto, no el primero: si el modelo escribe
   // algo antes de llamar a la herramienta (server tool), ese texto también
@@ -113,18 +142,22 @@ function parseJsonResponse(response) {
   const textBlocks = response.content.filter((b) => b.type === 'text')
   const textBlock = textBlocks[textBlocks.length - 1]
   if (!textBlock) {
-    return { ...EMPTY_RESULT, _debug: `sin bloque de texto en la respuesta (stop_reason=${response.stop_reason})` }
+    return { ...EMPTY_RESULT, _debug: `sin bloque de texto (stop_reason=${response.stop_reason}) | tools: ${toolInfo}` }
   }
-  // El modelo a veces envuelve el JSON en un bloque de código markdown pese a
-  // pedirle que no lo haga — lo sacamos si aparece.
-  const raw = textBlock.text
+  // El modelo a veces envuelve el JSON en un bloque de código markdown, o
+  // agrega prosa antes/después, pese a que se le pide que no lo haga.
+  const cleaned = textBlock.text
     .trim()
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/```\s*$/, '')
     .trim()
+  const jsonText = extractJsonObject(cleaned)
+  if (!jsonText) {
+    return { ...EMPTY_RESULT, _debug: `sin JSON en la respuesta: ${cleaned.slice(0, 250)} | tools: ${toolInfo}` }
+  }
   try {
-    return { ...EMPTY_RESULT, ...JSON.parse(raw) }
+    return { ...EMPTY_RESULT, ...JSON.parse(jsonText) }
   } catch {
-    return { ...EMPTY_RESULT, _debug: `no se pudo parsear la respuesta: ${raw.slice(0, 300)}` }
+    return { ...EMPTY_RESULT, _debug: `no se pudo parsear: ${jsonText.slice(0, 250)} | tools: ${toolInfo}` }
   }
 }
