@@ -36,10 +36,14 @@ insert into storage.buckets (id, name, public)
 values ('item-photos', 'item-photos', true)
 on conflict (id) do nothing;
 
-create policy if not exists "item-photos public read"
+-- CREATE POLICY no soporta IF NOT EXISTS en Postgres; se usa drop-then-create
+-- para que el script sea seguro de correr más de una vez.
+drop policy if exists "item-photos public read" on storage.objects;
+create policy "item-photos public read"
   on storage.objects for select
   using (bucket_id = 'item-photos');
 
-create policy if not exists "item-photos anon insert"
+drop policy if exists "item-photos anon insert" on storage.objects;
+create policy "item-photos anon insert"
   on storage.objects for insert
   with check (bucket_id = 'item-photos');
