@@ -45,7 +45,7 @@ export default async function handler(req, res) {
 
 async function extractFromLink(link) {
   const response = await client.messages.create({
-    model: 'claude-opus-5',
+    model: 'claude-sonnet-5',
     // Con tool use (web_fetch) + thinking por defecto, 2048 se quedaba corto
     // y el modelo se cortaba antes de escribir el JSON final. 4096 da margen
     // sin gastar de más: es un techo, no un piso — solo se cobra lo que
@@ -74,7 +74,7 @@ Si algún dato no está disponible en la página, usá null para ese campo. No i
 
 async function extractFromImage(imageBase64, mediaType) {
   const response = await client.messages.create({
-    model: 'claude-opus-5',
+    model: 'claude-sonnet-5',
     max_tokens: 3072,
     output_config: { effort: 'low', format: { type: 'json_schema', schema: SCHEMA } },
     messages: [
