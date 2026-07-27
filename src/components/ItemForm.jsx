@@ -23,6 +23,7 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
   const [autoError, setAutoError] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(null)
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
@@ -115,6 +116,7 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
   }
 
   return (
+    <>
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
@@ -140,7 +142,11 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
             <div className="photo-gallery">
               {form.photo_urls.map((url, idx) => (
                 <div className="photo-gallery-item" key={url + idx}>
-                  <img src={url} alt={`Foto ${idx + 1}`} />
+                  <img
+                    src={url}
+                    alt={`Foto ${idx + 1}`}
+                    onClick={() => setLightboxIndex(idx)}
+                  />
                   <button
                     type="button"
                     className="photo-gallery-remove"
@@ -262,5 +268,51 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
         </form>
       </div>
     </div>
+
+    {lightboxIndex !== null && (
+      <div className="lightbox-overlay" onClick={() => setLightboxIndex(null)}>
+        <button
+          type="button"
+          className="lightbox-close"
+          onClick={() => setLightboxIndex(null)}
+          aria-label="Cerrar"
+        >
+          ✕
+        </button>
+        {form.photo_urls.length > 1 && (
+          <button
+            type="button"
+            className="lightbox-nav lightbox-prev"
+            onClick={(e) => {
+              e.stopPropagation()
+              setLightboxIndex((i) => (i - 1 + form.photo_urls.length) % form.photo_urls.length)
+            }}
+            aria-label="Foto anterior"
+          >
+            ‹
+          </button>
+        )}
+        <img
+          className="lightbox-img"
+          src={form.photo_urls[lightboxIndex]}
+          alt={`Foto ${lightboxIndex + 1}`}
+          onClick={(e) => e.stopPropagation()}
+        />
+        {form.photo_urls.length > 1 && (
+          <button
+            type="button"
+            className="lightbox-nav lightbox-next"
+            onClick={(e) => {
+              e.stopPropagation()
+              setLightboxIndex((i) => (i + 1) % form.photo_urls.length)
+            }}
+            aria-label="Foto siguiente"
+          >
+            ›
+          </button>
+        )}
+      </div>
+    )}
+    </>
   )
 }

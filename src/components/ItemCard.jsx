@@ -10,14 +10,12 @@ function formatPrice(price, currency) {
 export default function ItemCard({ item, onOpen }) {
   const priceLabel = formatPrice(item.price, item.currency)
   const photos = item.photo_urls || []
-  const { fg } = categoryStyle(item.category)
+  const { bg } = categoryStyle(item.category)
 
   return (
-    <div
-      className="card"
-      style={{ borderLeftColor: fg, borderBottomColor: fg }}
-      onClick={() => onOpen(item)}
-    >
+    <div className="card" onClick={() => onOpen(item)}>
+      <div className="card-accent-left" style={{ background: bg }} />
+      <div className="card-accent-bottom" style={{ background: bg }} />
       <div className="card-media">
         {photos.length > 0 ? (
           <img src={photos[0]} alt={item.title || 'Artículo'} loading="lazy" />
