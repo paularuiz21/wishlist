@@ -29,6 +29,29 @@ export default function App() {
     refresh()
   }, [])
 
+  // Interceptar el botón físico de volver (Android) para cerrar el modal
+  // en vez de salir de la app — mismo patrón que Lucilo.
+  useEffect(() => {
+    function handlePopState() {
+      if (editing !== null) setEditing(null)
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [editing])
+
+  function openEditing(item) {
+    setEditing(item)
+    window.history.pushState({ wishlist_sheet: 'item' }, '')
+  }
+
+  function closeEditing() {
+    if (window.history.state?.wishlist_sheet === 'item') {
+      window.history.back()
+    } else {
+      setEditing(null)
+    }
+  }
+
   async function refresh() {
     if (!supabaseConfigured) {
       setError('Falta configurar Supabase: copiá .env.example a .env.local y completá las variables (ver README).')
@@ -77,13 +100,13 @@ export default function App() {
       const created = await createItem(payload)
       setItems((prev) => [created, ...prev])
     }
-    setEditing(null)
+    closeEditing()
   }
 
   async function handleTogglePurchased(item) {
     const updated = await setPurchased(item.id, !item.purchased)
     setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)))
-    setEditing(null)
+    closeEditing()
   }
 
   async function handleDelete() {
@@ -91,7 +114,7 @@ export default function App() {
     await deleteItem(pendingDelete.id)
     setItems((prev) => prev.filter((i) => i.id !== pendingDelete.id))
     setPendingDelete(null)
-    setEditing(null)
+    closeEditing()
   }
 
   return (
@@ -125,12 +148,12 @@ export default function App() {
       {!error && !loading && visible.length > 0 && (
         <div className="grid">
           {visible.map((item) => (
-            <ItemCard key={item.id} item={item} onOpen={setEditing} />
+            <ItemCard key={item.id} item={item} onOpen={openEditing} />
           ))}
         </div>
       )}
 
-      <button className="fab" onClick={() => setEditing({})} aria-label="Agregar artículo">
+      <button className="fab" onClick={() => openEditing({})} aria-label="Agregar artículo">
         +
       </button>
 
@@ -140,7 +163,7 @@ export default function App() {
           onSave={handleSave}
           onDelete={() => setPendingDelete(editing)}
           onTogglePurchased={handleTogglePurchased}
-          onClose={() => setEditing(null)}
+          onClose={closeEditing}
         />
       )}
 
