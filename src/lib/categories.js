@@ -8,6 +8,7 @@ export const CATEGORIES = [
   { value: 'Electro', bg: '#C6D2DC', fg: '#233C4E' },
   { value: 'Belleza', bg: '#DCC6CC', fg: '#582A35' },
   { value: 'Libros', bg: '#D6D0C4', fg: '#453F2F' },
+  { value: 'Mascota', bg: '#D9BFA0', fg: '#6B4423' },
   { value: 'Otros', bg: '#D8D3D6', fg: '#3F383D' },
 ]
 
