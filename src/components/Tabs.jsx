@@ -1,6 +1,6 @@
 export default function Tabs({ active, onChange }) {
   const tabs = [
-    { value: 'active', label: 'Todas' },
+    { value: 'active', label: 'Wishlist' },
     { value: 'purchased', label: 'Comprados' },
   ]
   return (

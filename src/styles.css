@@ -238,6 +238,11 @@ a {
 .card {
   background: #fff;
   border: 1px solid #E4E4E7;
+  /* Borde lateral + inferior más gruesos, coloreados por categoría (color
+     inline vía style) — ayuda a diferenciar cada card de un vistazo, sobre
+     todo cuando la foto es un screenshot con ruido visual propio. */
+  border-left-width: 3px;
+  border-bottom-width: 5px;
   border-radius: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   overflow: hidden;
@@ -268,17 +273,10 @@ a {
   color: #C4C4CC;
 }
 
-.price-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: #fff;
-  color: #2B6CB0;
+.card-price {
+  font-size: 13px;
   font-weight: 600;
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  color: #18181B;
 }
 
 .photo-count-badge {

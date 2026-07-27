@@ -1,5 +1,6 @@
 import CategoryChip from './CategoryChip'
 import { currencySymbol } from '../lib/currencies'
+import { categoryStyle } from '../lib/categories'
 
 function formatPrice(price, currency) {
   if (price == null) return null
@@ -9,9 +10,14 @@ function formatPrice(price, currency) {
 export default function ItemCard({ item, onOpen }) {
   const priceLabel = formatPrice(item.price, item.currency)
   const photos = item.photo_urls || []
+  const { fg } = categoryStyle(item.category)
 
   return (
-    <div className="card" onClick={() => onOpen(item)}>
+    <div
+      className="card"
+      style={{ borderLeftColor: fg, borderBottomColor: fg }}
+      onClick={() => onOpen(item)}
+    >
       <div className="card-media">
         {photos.length > 0 ? (
           <img src={photos[0]} alt={item.title || 'Artículo'} loading="lazy" />
@@ -24,7 +30,6 @@ export default function ItemCard({ item, onOpen }) {
             </svg>
           </div>
         )}
-        {priceLabel && <span className="price-badge">{priceLabel}</span>}
         {photos.length > 1 && <span className="photo-count-badge">+{photos.length - 1}</span>}
       </div>
       <div className="card-body">
@@ -33,6 +38,7 @@ export default function ItemCard({ item, onOpen }) {
           {item.subcategory && <span className="subcategory-text">{item.subcategory}</span>}
         </div>
         <div className="card-title">{item.title || 'Sin título'}</div>
+        {priceLabel && <div className="card-price">{priceLabel}</div>}
         {item.link && (
           <a
             className="card-link"
