@@ -2,8 +2,9 @@
 // Editable/ampliable: agregar una entrada acá alcanza para soportar una categoría nueva.
 export const CATEGORIES = [
   { value: 'Ropa', bg: '#DCD4C9', fg: '#4A3D28' },
-  { value: 'Muebles', bg: '#D9CDAE', fg: '#5C4713' },
-  { value: 'Cocina', bg: '#C7D3C3', fg: '#2E4A2C' },
+  { value: 'Accesorios', bg: '#D8BFA8', fg: '#6B3A1E' },
+  { value: 'Bijou', bg: '#E1D4A0', fg: '#6B5217' },
+  { value: 'Hogar', bg: '#C9D0BC', fg: '#3E4A2E' },
   { value: 'Electro', bg: '#C6D2DC', fg: '#233C4E' },
   { value: 'Belleza', bg: '#DCC6CC', fg: '#582A35' },
   { value: 'Libros', bg: '#D6D0C4', fg: '#453F2F' },

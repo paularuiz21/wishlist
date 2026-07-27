@@ -13,7 +13,14 @@ export default function App() {
   const [tab, setTab] = useState('active')
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
+  const [subcategory, setSubcategory] = useState('')
   const [sort, setSort] = useState('date_desc')
+
+  // Al cambiar de categoría, la subcategoría filtrada ya no aplica.
+  function handleCategoryFilter(value) {
+    setCategory(value)
+    setSubcategory('')
+  }
   const [editing, setEditing] = useState(null) // null = cerrado, {} = nuevo, item = editar
   const [pendingDelete, setPendingDelete] = useState(null)
   const [error, setError] = useState('')
@@ -43,6 +50,7 @@ export default function App() {
   const visible = useMemo(() => {
     let list = items.filter((i) => (tab === 'purchased' ? i.purchased : !i.purchased))
     if (category) list = list.filter((i) => i.category === category)
+    if (subcategory) list = list.filter((i) => i.subcategory === subcategory)
     if (search.trim()) {
       const q = search.trim().toLowerCase()
       list = list.filter(
@@ -59,7 +67,7 @@ export default function App() {
       return new Date(b.created_at) - new Date(a.created_at)
     })
     return list
-  }, [items, tab, category, search, sort])
+  }, [items, tab, category, subcategory, search, sort])
 
   async function handleSave(payload) {
     if (editing?.id) {
@@ -93,7 +101,16 @@ export default function App() {
       </div>
 
       <Tabs active={tab} onChange={setTab} />
-      <Toolbar search={search} onSearch={setSearch} category={category} onCategory={setCategory} sort={sort} onSort={setSort} />
+      <Toolbar
+        search={search}
+        onSearch={setSearch}
+        category={category}
+        onCategory={handleCategoryFilter}
+        subcategory={subcategory}
+        onSubcategory={setSubcategory}
+        sort={sort}
+        onSort={setSort}
+      />
 
       {error && <div className="empty-state">{error}</div>}
 

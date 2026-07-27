@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CATEGORIES } from '../lib/categories'
 import { CURRENCIES } from '../lib/currencies'
+import { SUBCATEGORIES } from '../lib/subcategories'
 import { uploadPhoto } from '../lib/items'
 
 const empty = {
@@ -25,6 +26,16 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
+  }
+
+  // Al cambiar de categoría, la subcategoría vieja puede ya no aplicar
+  // (ej. "Calzado" no tiene sentido si pasás de Accesorios a Libros).
+  function handleCategoryChange(value) {
+    setForm((f) => ({
+      ...f,
+      category: value,
+      subcategory: (SUBCATEGORIES[value] || []).includes(f.subcategory) ? f.subcategory : '',
+    }))
   }
 
   // El reconocimiento sale únicamente de las fotos subidas — el link es solo
@@ -192,7 +203,7 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
           <div className="field-row">
             <div className="field">
               <label>Categoría</label>
-              <select value={form.category} onChange={(e) => set('category', e.target.value)}>
+              <select value={form.category} onChange={(e) => handleCategoryChange(e.target.value)}>
                 {CATEGORIES.map((c) => (
                   <option key={c.value} value={c.value}>
                     {c.value}
@@ -200,15 +211,19 @@ export default function ItemForm({ item, onSave, onDelete, onTogglePurchased, on
                 ))}
               </select>
             </div>
-            <div className="field">
-              <label>Subcategoría (opcional)</label>
-              <input
-                type="text"
-                placeholder="Ej: Zapatillas, Camisas..."
-                value={form.subcategory || ''}
-                onChange={(e) => set('subcategory', e.target.value)}
-              />
-            </div>
+            {SUBCATEGORIES[form.category] && (
+              <div className="field">
+                <label>Subcategoría</label>
+                <select value={form.subcategory || ''} onChange={(e) => set('subcategory', e.target.value)}>
+                  <option value="">Sin especificar</option>
+                  {SUBCATEGORIES[form.category].map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="field">

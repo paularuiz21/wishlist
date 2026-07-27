@@ -1,6 +1,9 @@
 import { CATEGORIES, categoryStyle } from '../lib/categories'
+import { SUBCATEGORIES } from '../lib/subcategories'
 
-export default function Toolbar({ search, onSearch, category, onCategory, sort, onSort }) {
+export default function Toolbar({ search, onSearch, category, onCategory, subcategory, onSubcategory, sort, onSort }) {
+  const subOptions = SUBCATEGORIES[category]
+
   return (
     <div>
       <div className="category-filter">
@@ -25,6 +28,31 @@ export default function Toolbar({ search, onSearch, category, onCategory, sort, 
           )
         })}
       </div>
+
+      {subOptions && (
+        <div className="category-filter subcategory-filter">
+          <button
+            className={`category-chip-btn subcategory-chip-btn ${subcategory === '' ? 'active' : ''}`}
+            style={{ background: '#EAEAEC', color: '#52525B' }}
+            onClick={() => onSubcategory('')}
+          >
+            Todas
+          </button>
+          {subOptions.map((s) => {
+            const { bg, fg } = categoryStyle(category)
+            return (
+              <button
+                key={s}
+                className={`category-chip-btn subcategory-chip-btn ${subcategory === s ? 'active' : ''}`}
+                style={{ background: bg, color: fg }}
+                onClick={() => onSubcategory(subcategory === s ? '' : s)}
+              >
+                {s}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       <div className="toolbar">
         <input
