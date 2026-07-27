@@ -11,9 +11,15 @@ export default function ItemCard({ item, onOpen }) {
   const priceLabel = formatPrice(item.price, item.currency)
   const photos = item.photo_urls || []
   const { bg } = categoryStyle(item.category)
+  const accentStyle = {
+    borderTop: `2px solid ${bg}`,
+    borderLeft: `2px solid ${bg}`,
+    borderRight: `2px solid ${bg}`,
+    borderBottom: `5px solid ${bg}`,
+  }
 
   return (
-    <div className="card" onClick={() => onOpen(item)}>
+    <div className="card" style={accentStyle} onClick={() => onOpen(item)}>
       <div className="card-media">
         {photos.length > 0 ? (
           <img src={photos[0]} alt={item.title || 'Artículo'} loading="lazy" />
@@ -47,8 +53,6 @@ export default function ItemCard({ item, onOpen }) {
           </a>
         )}
       </div>
-      <div className="card-accent-left" style={{ background: bg }} />
-      <div className="card-accent-bottom" style={{ background: bg }} />
     </div>
   )
 }

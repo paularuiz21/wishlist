@@ -238,33 +238,12 @@ a {
 .card {
   position: relative;
   background: #fff;
-  border: 1px solid #E4E4E7;
   border-radius: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   cursor: pointer;
-}
-
-/* Franjas de color por categoría — divs superpuestos en vez de border-left/
-   border-bottom: mezclar bordes de un solo lado con border-radius arma un
-   empalme torcido justo en la esquina. Como .card ya tiene overflow:hidden,
-   estas franjas quedan recortadas prolijamente por las esquinas redondeadas. */
-.card-accent-left {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-}
-
-.card-accent-bottom {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 5px;
 }
 
 .card-media {
