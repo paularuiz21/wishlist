@@ -14,8 +14,6 @@ export default function ItemCard({ item, onOpen }) {
 
   return (
     <div className="card" onClick={() => onOpen(item)}>
-      <div className="card-accent-left" style={{ background: bg }} />
-      <div className="card-accent-bottom" style={{ background: bg }} />
       <div className="card-media">
         {photos.length > 0 ? (
           <img src={photos[0]} alt={item.title || 'Artículo'} loading="lazy" />
@@ -49,6 +47,8 @@ export default function ItemCard({ item, onOpen }) {
           </a>
         )}
       </div>
+      <div className="card-accent-left" style={{ background: bg }} />
+      <div className="card-accent-bottom" style={{ background: bg }} />
     </div>
   )
 }
