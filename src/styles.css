@@ -132,11 +132,12 @@ a {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  /* padding-top da lugar al box-shadow del chip activo — sin esto, el
-     contenedor scrolleable lo recorta también en el eje vertical (una
-     rareza de CSS: overflow-x: auto fuerza overflow-y a "auto" también). */
-  padding: 3px 0 5px;
-  margin-bottom: 12px;
+  /* padding da lugar al subrayado del chip activo (queda por fuera de la
+     píldora) — sin esto, el contenedor scrolleable lo recorta también en
+     el eje vertical (rareza de CSS: overflow-x: auto fuerza overflow-y a
+     "auto" también). */
+  padding: 3px 0 9px;
+  margin-bottom: 8px;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -146,20 +147,16 @@ a {
 }
 
 .subcategory-filter {
-  margin-top: -6px;
+  margin-top: -2px;
 }
 
 .subcategory-chip-btn {
   font-size: 11.5px;
   padding: 4px 11px;
-  opacity: 0.7;
-}
-
-.subcategory-chip-btn.active {
-  opacity: 1;
 }
 
 .category-chip-btn {
+  position: relative;
   flex-shrink: 0;
   border: none;
   border-radius: 999px;
@@ -167,14 +164,24 @@ a {
   font-size: 13px;
   padding: 6px 14px;
   cursor: pointer;
-  opacity: 0.55;
-  transition: opacity 0.15s ease, box-shadow 0.15s ease;
   white-space: nowrap;
 }
 
+/* Subrayado propio del color de cada categoría (currentColor = su fg) para
+   marcar cuál está filtrada, en vez de atenuar las demás con opacity. */
+.category-chip-btn.active::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: -5px;
+  height: 2.5px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
 .category-chip-btn.active {
-  opacity: 1;
-  box-shadow: 0 0 0 2px rgba(24, 24, 27, 0.18);
+  font-weight: 700;
 }
 
 .toolbar {
